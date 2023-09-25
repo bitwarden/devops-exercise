@@ -1,0 +1,35 @@
+version: '3'
+
+services:
+  app:
+    container_name: app
+    image: bw-devops-exercise
+    ports:
+      - '8080' 
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      BW_MESSAGE: "hey"
+    networks:
+      - private
+
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    depends_on:
+      - app
+    volumes:
+      - ./reverse_proxy.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 8081:8081
+    networks:
+      - public
+      - private      
+
+networks:
+  private:
+    internal: true  
+  public:
+    internal: false

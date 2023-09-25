@@ -15,4 +15,4 @@ WORKDIR /src
 COPY . .
 RUN pipenv sync
 EXPOSE 8080
-CMD [ "uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8080" ]
+CMD [ "uvicorn", "src.app:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8080" ]

@@ -11,8 +11,8 @@ COPY Pipfile Pipfile.lock ./
 RUN python -m pip install --upgrade pip
 RUN pip install pipenv && pipenv install --dev --system --deploy
 
-WORKDIR /src
-COPY . .
+WORKDIR /var/www
+COPY . ./app
 RUN pipenv sync
 EXPOSE 8080
 CMD [ "uvicorn", "src.app:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "8080" ]

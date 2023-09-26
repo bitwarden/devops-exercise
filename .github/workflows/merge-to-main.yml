@@ -13,8 +13,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       VERSION: ${ github.ref_name#refs/tags/ }
-      # MAJOR_VERSION: ${ VERSION%%.* }
-      # PATCH_VERSION: ${ $(VERSION##*.) + 1 }
+
     steps:
     - uses: actions/checkout@v3
 
@@ -23,10 +22,35 @@ jobs:
         echo 'VERSION_JSON<<EOF' >> $GITHUB_ENV
         cat ./package.json >> $GITHUB_ENV
         echo 'EOF' >> $GITHUB_ENV
-        MAJOR_VERSION=${VERSION%%.*}
-        MINOR_VERSION=${VERSION#*.}
-        PATCH_VERSION=${VERSION##*.}
-        
-    # - name: Build Docker Image
-    #   run: |
-    #     docker -t bw-devops-exercise:${{ fromJson(env.VERSION_JSON).baseVersion }}
+        MINOR_VERSION=${env.VERSION%.*}
+        MAJOR_VERSION=${env.MINOR_VERSION%.*}
+        PATCH_VERSION=${{env.MINOR_VERSION != env.VERSION_JSON && '0' || $(env.VERSION##*.) + 1}}
+        NEW_VERSION=${{ join('[fromJson(env.VERSION_JSON).baseVersion, env.PATCH_VERSION]', '.') }}
+        IMAGE_NAME=bw-devops-exercise:${env.NEW_VERSION}
+          
+    - name: Build Docker Image
+      run: |
+        docker -t ${ env.IMAGE_NAME } .
+
+    - name: Push Docker Image to image repo
+      run: |
+        docker push ghcr.io/JoseVillarreal/${ env.IMAGE_NAME }
+
+    - name: Create Github Tag
+      run: |
+        git tag ${env.NEW_VERSION}
+
+    - name: Update docker image tag
+      run: |
+        docker tag ${env.NEW_VERSION} JoseVillarreal/bw-devops-exercise:latest 
+
+    - name: Create Github Release
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        tag: ${{ env.NEW_VERSION }}
+      run: |
+        gh release create "$tag" \
+          --repo="${github.ref_name}" \
+          --title="${github.ref_name} ${tag#v}" \
+          --notes="Releasing ${env.NEW_VERSION}" \
+          --generate-notes

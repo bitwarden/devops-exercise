@@ -26,6 +26,6 @@ services:
       - app-network
 
   # Docker Networks
-  networks:
-    app-network:
-      driver: bridge
+networks:
+  app-network:
+    driver: bridge

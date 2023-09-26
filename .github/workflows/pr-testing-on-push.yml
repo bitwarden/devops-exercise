@@ -1,0 +1,16 @@
+name: Run Tests
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    types: [opened, synchronize]
+jobs:
+  run-tests:
+    name: Run tests
+    runs-on: ubuntu-22.04
+
+    steps:
+    - name: Run unit tests
+      run: pytest tests/unit

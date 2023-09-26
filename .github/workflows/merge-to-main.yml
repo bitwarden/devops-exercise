@@ -1,0 +1,32 @@
+name: Docker publish and tag
+
+on:
+  pull_request:
+    branches:
+    - main
+    types: [closed]
+
+jobs:
+  build-image:
+    if: ${{ github.event.pull_request.merged }}
+    name: Build Docker Image
+    runs-on: ubuntu-22.04
+    env:
+      VERSION: ${ github.ref_name#refs/tags/ }
+      # MAJOR_VERSION: ${ VERSION%%.* }
+      # PATCH_VERSION: ${ $(VERSION##*.) + 1 }
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Get major version num from version.json
+      run: |
+        echo 'VERSION_JSON<<EOF' >> $GITHUB_ENV
+        cat ./package.json >> $GITHUB_ENV
+        echo 'EOF' >> $GITHUB_ENV
+        MAJOR_VERSION=${VERSION%%.*}
+        MINOR_VERSION=${VERSION#*.}
+        PATCH_VERSION=${VERSION##*.}
+        
+    # - name: Build Docker Image
+    #   run: |
+    #     docker -t bw-devops-exercise:${{ fromJson(env.VERSION_JSON).baseVersion }}

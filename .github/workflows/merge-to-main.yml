@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-image:
-    if: ${{ github.event.pull_request.merged }}
+    if: github.event.pull_request.merged == true
     name: Build Docker Image
     runs-on: ubuntu-22.04
     env:
@@ -16,6 +16,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    - name: Install dependencies
+      run: |
+        pip install pipenv
+        pipenv install --deploy
+        pipenv install --dev --deploy
 
     - name: Get major version num from version.json
       run: |
@@ -27,7 +35,32 @@ jobs:
         PATCH_VERSION=${{env.MINOR_VERSION != env.VERSION_JSON && '0' || $(env.VERSION##*.) + 1}}
         NEW_VERSION=${{ join('[fromJson(env.VERSION_JSON).baseVersion, env.PATCH_VERSION]', '.') }}
         IMAGE_NAME=bw-devops-exercise:${env.NEW_VERSION}
-          
+    
+    # - name: get-version
+    #   id: get-version
+    #   run: |
+    #     BASE_VERSION=$(jq .baseVersion version.json)
+    #     echo "BASE_VERSION=${BASE_VERSION}" >> $GITHUB_ENV
+    #     VERSION=$(jq .version package.json)
+    #     echo "${VERSION}"
+    #     echo "VERSION=${VERSION}" >> $GITHUB_ENV
+    #     echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT  
+
+    # - name: Parse semver string
+    #   id: semver_parser
+    #   uses: booxmedialtd/ws-action-parse-semver@v1
+    #   with:
+    #     input_string: ${{ steps.get-version.outputs.version }}
+
+    # - name: Generate version numbers
+    #   run: |
+    #     MINOR_VERSION="${{ steps.semver_parser.outputs.minor}}"
+    #     MAJOR_VERSION=${{ steps.semver_parser.outputs.major}}
+    #     CURRENT_PATCH_VERSION=${{ steps.semver_parser.outputs.patch}} + 1
+    #     PATCH_VERSION=${{ env.MINOR_VERSION != env.VERSION && '0' || env.CURRENT_PATCH_VERSION }}
+    #     NEW_VERSION=${{ join('env.VERSION, env.PATCH_VERSION]', '.') }}
+    #     IMAGE_NAME=bw-devops-exercise:${env.NEW_VERSION}    
+
     - name: Build Docker Image
       run: |
         docker -t ${ env.IMAGE_NAME } .
@@ -54,3 +87,9 @@ jobs:
           --title="${github.ref_name} ${tag#v}" \
           --notes="Releasing ${env.NEW_VERSION}" \
           --generate-notes
+    
+    - name: Update version in version.json & package.json
+      run: |
+        jq --arg NEW_VERSION env.NEW_VERSION '.version="$NEW_VERSION"' version.json
+        jq --arg NEW_VERSION env.NEW_VERSION '.version="$NEW_VERSION"' package.json
+      

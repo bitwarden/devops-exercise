@@ -12,5 +12,18 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+    - name: checkout repository
+      uses: actions/checkout@v2
+    - name: Install Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    - name: Install pipenv
+      run: pip install pipenv
+    - name: Install dependencies
+      run: |
+        pipenv install --deploy
+        pipenv install --dev --deploy
     - name: Run unit tests
-      run: pytest tests/unit
+      run: pipenv run pytest
+  

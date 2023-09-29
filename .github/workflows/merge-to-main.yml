@@ -1,4 +1,4 @@
-name: Docker publish and tag
+name: Docker publish and tag on merge to main
 
 on:
   pull_request:
@@ -66,7 +66,7 @@ jobs:
         NEW_VERSION=${{ steps.outputs.semvers.outputs.minor}}
         IMAGE_NAME=bw-devops-exercise:${env.NEW_VERSION}
         echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
-        
+
     - name: Build Docker Image
       run: |
         docker -t ${ env.IMAGE_NAME } .
